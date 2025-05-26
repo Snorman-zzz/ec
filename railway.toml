@@ -1,0 +1,10 @@
+[build]
+command = "npm install"
+
+[deploy]
+startCommand = "npm start"
+restartPolicyType = "never"
+
+[env]
+NODE_ENV = "production"
+PORT = "8080"

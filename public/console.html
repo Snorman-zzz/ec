@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Equity Data Console</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            background: #1a1a1a;
+            color: #00ff00;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .console-container {
+            display: flex;
+            height: 100vh;
+        }
+
+        .sidebar {
+            width: 300px;
+            background: #2d2d2d;
+            border-right: 2px solid #555;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .main-console {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #1a1a1a;
+        }
+
+        .console-header {
+            background: #333;
+            padding: 15px;
+            border-bottom: 2px solid #555;
+            text-align: center;
+            font-size: 1.2em;
+            color: #00ffff;
+        }
+
+        .console-output {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: #1a1a1a;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .console-input {
+            background: #2d2d2d;
+            border-top: 2px solid #555;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+        }
+
+        .prompt {
+            color: #ff6b6b;
+            margin-right: 10px;
+            font-weight: bold;
+        }
+
+        #command-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: #00ff00;
+            font-family: inherit;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .query-builder {
+            margin-bottom: 30px;
+        }
+
+        .query-section {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #333;
+            border-radius: 5px;
+            border: 1px solid #555;
+        }
+
+        .query-section h3 {
+            color: #00ffff;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .query-option {
+            margin: 8px 0;
+            cursor: pointer;
+            padding: 8px;
+            background: #444;
+            border-radius: 3px;
+            transition: background 0.2s;
+        }
+
+        .query-option:hover {
+            background: #555;
+        }
+
+        .query-option.active {
+            background: #0066cc;
+            color: white;
+        }
+
+        .custom-query {
+            width: 100%;
+            height: 80px;
+            background: #1a1a1a;
+            border: 1px solid #555;
+            color: #00ff00;
+            font-family: inherit;
+            padding: 10px;
+            border-radius: 3px;
+            resize: vertical;
+        }
+
+        .btn {
+            background: #00ff00;
+            color: #1a1a1a;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: bold;
+            margin: 5px;
+        }
+
+        .btn:hover {
+            background: #00cc00;
+        }
+
+        .btn.secondary {
+            background: #555;
+            color: #fff;
+        }
+
+        .btn.secondary:hover {
+            background: #666;
+        }
+
+        .output-line {
+            margin: 2px 0;
+        }
+
+        .output-line.command {
+            color: #ff6b6b;
+        }
+
+        .output-line.result {
+            color: #00ff00;
+        }
+
+        .output-line.error {
+            color: #ff4444;
+        }
+
+        .output-line.info {
+            color: #00ffff;
+        }
+
+        .data-table {
+            border-collapse: collapse;
+            margin: 10px 0;
+            width: 100%;
+        }
+
+        .data-table th,
+        .data-table td {
+            border: 1px solid #555;
+            padding: 8px 12px;
+            text-align: left;
+        }
+
+        .data-table th {
+            background: #333;
+            color: #00ffff;
+        }
+
+        .chart-container {
+            margin: 20px 0;
+            padding: 20px;
+            background: #2d2d2d;
+            border-radius: 5px;
+            border: 1px solid #555;
+        }
+
+        .chart-title {
+            color: #00ffff;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+
+        .bar-chart {
+            display: flex;
+            align-items: end;
+            height: 200px;
+            gap: 5px;
+            padding: 10px;
+        }
+
+        .chart-bar {
+            flex: 1;
+            background: linear-gradient(180deg, #00ff00 0%, #008800 100%);
+            border-radius: 3px 3px 0 0;
+            position: relative;
+            min-height: 10px;
+            display: flex;
+            align-items: end;
+            justify-content: center;
+            color: #000;
+            font-weight: bold;
+            padding: 5px;
+            font-size: 12px;
+        }
+
+        .chart-label {
+            position: absolute;
+            bottom: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 10px;
+            color: #888;
+            text-align: center;
+            width: 100%;
+        }
+
+        .pie-chart {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 15px;
+            justify-content: center;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+        }
+
+        .legend-color {
+            width: 15px;
+            height: 15px;
+            border-radius: 2px;
+        }
+
+        .help-section {
+            margin-bottom: 20px;
+            font-size: 12px;
+            line-height: 1.6;
+        }
+
+        .help-section h4 {
+            color: #ff6b6b;
+            margin-bottom: 8px;
+        }
+
+        .help-section code {
+            background: #444;
+            padding: 2px 6px;
+            border-radius: 2px;
+            color: #ffff00;
+        }
+
+        .scrollbar::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .scrollbar::-webkit-scrollbar-track {
+            background: #2d2d2d;
+        }
+
+        .scrollbar::-webkit-scrollbar-thumb {
+            background: #555;
+            border-radius: 4px;
+        }
+
+        .scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #666;
+        }
+
+        .export-options {
+            margin-top: 10px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="console-container">
+        <div class="sidebar scrollbar">
+            <div class="help-section">
+                <h4>🔍 Quick Commands</h4>
+                <div>• <code>help</code> - Show all commands</div>
+                <div>• <code>clear</code> - Clear console</div>
+                <div>• <code>stats</code> - Basic statistics</div>
+                <div>• <code>equity</code> - Equity distributions</div>
+                <div>• <code>founders</code> - Founder analysis</div>
+                <div>• <code>factors</code> - Contributing factors</div>
+            </div>
+
+            <div class="query-builder">
+                <div class="query-section">
+                    <h3>📊 Quick Queries</h3>
+                    <div class="query-option" data-query="equity-ranges">
+                        Equity Distribution Ranges
+                    </div>
+                    <div class="query-option" data-query="founder-count">
+                        Companies by Founder Count
+                    </div>
+                    <div class="query-option" data-query="top-factors">
+                        Most Important Factors
+                    </div>
+                    <div class="query-option" data-query="investment-levels">
+                        Investment Ranges
+                    </div>
+                    <div class="query-option" data-query="recent-activity">
+                        Recent Activity Timeline
+                    </div>
+                </div>
+
+                <div class="query-section">
+                    <h3>📈 Infographics</h3>
+                    <div class="query-option" data-infographic="equity-split">
+                        Equity Split Patterns
+                    </div>
+                    <div class="query-option" data-infographic="factor-impact">
+                        Factor Impact Analysis
+                    </div>
+                    <div class="query-option" data-infographic="company-size">
+                        Company Size Distribution
+                    </div>
+                    <div class="query-option" data-infographic="founder-roles">
+                        Founder Role Analysis
+                    </div>
+                </div>
+
+                <div class="query-section">
+                    <h3>💾 Custom SQL</h3>
+                    <textarea id="custom-sql" class="custom-query" placeholder="Enter custom SQL query..."></textarea>
+                    <button class="btn" id="execute-sql-btn">Execute SQL</button>
+                </div>
+
+                <div class="query-section">
+                    <h3>📤 Export Options</h3>
+                    <div class="export-options">
+                        <button class="btn secondary" data-export="csv">Export CSV</button>
+                        <button class="btn secondary" data-export="json">Export JSON</button>
+                        <button class="btn secondary" data-export="png">Save Chart</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-console">
+            <div class="console-header">
+                🏢 EQUITY DATA CONSOLE v2.0 - Interactive Analytics & Infographics
+            </div>
+            <div class="console-output scrollbar" id="console-output">
+                <div class="output-line info">Welcome to Equity Data Console!</div>
+                <div class="output-line info">Type 'help' for available commands or use the sidebar for quick queries.</div>
+                <div class="output-line info">Loading database connection...</div>
+            </div>
+            <div class="console-input">
+                <span class="prompt">equity></span>
+                <input type="text" id="command-input" placeholder="Enter command or SQL query..." autocomplete="off">
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentData = [];
+        let commandHistory = [];
+        let historyIndex = -1;
+
+        // Initialize console
+        document.addEventListener('DOMContentLoaded', function() {
+            loadInitialStats();
+            setupEventListeners();
+        });
+
+        function setupEventListeners() {
+            const input = document.getElementById('command-input');
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    executeCommand();
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    navigateHistory(-1);
+                } else if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    navigateHistory(1);
+                }
+            });
+
+            // Quick query buttons
+            document.querySelectorAll('[data-query]').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const queryType = this.getAttribute('data-query');
+                    executeQuickQuery(queryType);
+                });
+            });
+
+            // Infographic buttons  
+            document.querySelectorAll('[data-infographic]').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const infographicType = this.getAttribute('data-infographic');
+                    generateInfographic(infographicType);
+                });
+            });
+
+            // Custom SQL button
+            document.getElementById('execute-sql-btn').addEventListener('click', function() {
+                executeCustomSQL();
+            });
+
+            // Export buttons
+            document.querySelectorAll('[data-export]').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const exportType = this.getAttribute('data-export');
+                    exportData(exportType);
+                });
+            });
+        }
+
+        function navigateHistory(direction) {
+            if (commandHistory.length === 0) return;
+            
+            historyIndex += direction;
+            if (historyIndex < 0) historyIndex = 0;
+            if (historyIndex >= commandHistory.length) historyIndex = commandHistory.length - 1;
+            
+            document.getElementById('command-input').value = commandHistory[historyIndex] || '';
+        }
+
+        async function loadInitialStats() {
+            try {
+                const response = await fetch('/api/analytics/overview');
+                const data = await response.json();
+                
+                addOutput('Database connected successfully!', 'info');
+                addOutput(`Found ${data.totalUsers} users, ${data.totalWorkspaces} workspaces, ${data.totalFounders} founders`, 'info');
+                addOutput('Ready for queries. Type a command or use the sidebar.', 'info');
+            } catch (error) {
+                addOutput('Failed to connect to database: ' + error.message, 'error');
+            }
+        }
+
+        function executeCommand() {
+            const input = document.getElementById('command-input');
+            const command = input.value.trim();
+            
+            if (!command) return;
+            
+            commandHistory.unshift(command);
+            historyIndex = -1;
+            
+            addOutput('equity> ' + command, 'command');
+            input.value = '';
+            
+            processCommand(command);
+        }
+
+        async function processCommand(command) {
+            const cmd = command.toLowerCase();
+            
+            try {
+                if (cmd === 'help') {
+                    showHelp();
+                } else if (cmd === 'clear') {
+                    clearConsole();
+                } else if (cmd === 'stats' || cmd === 'overview') {
+                    await showStats();
+                } else if (cmd === 'equity') {
+                    await showEquityData();
+                } else if (cmd === 'founders') {
+                    await showFounderData();
+                } else if (cmd === 'factors') {
+                    await showFactorData();
+                } else if (cmd.startsWith('sql:') || cmd.toUpperCase().startsWith('SELECT')) {
+                    await executeCustomSQL(cmd.startsWith('sql:') ? cmd.substring(4) : cmd);
+                } else if (cmd.startsWith('chart:')) {
+                    const chartType = cmd.substring(6);
+                    await generateChart(chartType);
+                } else {
+                    // Try to interpret as a natural language query
+                    await interpretQuery(command);
+                }
+            } catch (error) {
+                addOutput('Error: ' + error.message, 'error');
+            }
+        }
+
+        function showHelp() {
+            const helpText = `
+Available Commands:
+═══════════════════
+
+📊 Data Commands:
+  stats, overview    - Show database overview
+  equity            - Show equity distribution data
+  founders          - Show founder analysis
+  factors           - Show contributing factors analysis
+
+🔍 Query Commands:
+  sql: <query>      - Execute custom SQL query
+  SELECT ...        - Direct SQL execution
+
+📈 Chart Commands:
+  chart:bar         - Generate bar chart from last data
+  chart:pie         - Generate pie chart from last data
+  chart:line        - Generate line chart from last data
+
+🛠️ Utility Commands:
+  clear             - Clear console output
+  help              - Show this help message
+
+💡 Examples:
+  sql: SELECT * FROM founders LIMIT 10
+  SELECT workspace_id, equity_percentage FROM founders WHERE equity_percentage > 30
+  chart:pie
+            `;
+            addOutput(helpText, 'info');
+        }
+
+        function clearConsole() {
+            document.getElementById('console-output').innerHTML = '';
+            addOutput('Console cleared.', 'info');
+        }
+
+        async function showStats() {
+            try {
+                const response = await fetch('/api/analytics/overview');
+                const data = await response.json();
+                
+                addOutput('📊 DATABASE OVERVIEW', 'info');
+                addOutput('════════════════════', 'info');
+                addOutput(`Total Users: ${data.totalUsers}`, 'result');
+                addOutput(`Total Workspaces: ${data.totalWorkspaces}`, 'result');
+                addOutput(`Completed Workspaces: ${data.completedWorkspaces}`, 'result');
+                addOutput(`Completion Rate: ${data.completionRate}%`, 'result');
+                addOutput(`Total Founders: ${data.totalFounders}`, 'result');
+                addOutput(`Average Team Size: ${data.avgTeamSize}`, 'result');
+                addOutput(`Total Investment: $${data.totalInvestment?.toLocaleString() || '0'}`, 'result');
+                addOutput(`Total Hours Worked: ${data.totalHours?.toLocaleString() || '0'}`, 'result');
+                addOutput(`Total Assets Value: $${data.totalAssets?.toLocaleString() || '0'}`, 'result');
+            } catch (error) {
+                addOutput('Failed to fetch overview: ' + error.message, 'error');
+            }
+        }
+
+        async function showEquityData() {
+            try {
+                const response = await fetch('/api/analytics/equity-ranges');
+                const data = await response.json();
+                currentData = data;
+                
+                addOutput('💰 EQUITY DISTRIBUTION', 'info');
+                addOutput('═══════════════════════', 'info');
+                
+                createDataTable(data, ['range', 'count', 'avg_percentage']);
+                
+                addOutput(`\nUse 'chart:pie' to visualize this data`, 'info');
+            } catch (error) {
+                addOutput('Failed to fetch equity data: ' + error.message, 'error');
+            }
+        }
+
+        async function showFounderData() {
+            try {
+                const response = await fetch('/api/analytics/founder-patterns');
+                const data = await response.json();
+                currentData = data;
+                
+                addOutput('👥 FOUNDER PATTERNS', 'info');
+                addOutput('═════════════════════', 'info');
+                
+                createDataTable(data, ['contributor_type', 'founder_count', 'avg_cash', 'avg_time', 'avg_assets']);
+            } catch (error) {
+                addOutput('Failed to fetch founder data: ' + error.message, 'error');
+            }
+        }
+
+        async function showFactorData() {
+            try {
+                const response = await fetch('/api/analytics/factors-simple');
+                const data = await response.json();
+                currentData = data;
+                
+                addOutput('🎯 CONTRIBUTING FACTORS', 'info');
+                addOutput('═══════════════════════', 'info');
+                
+                createDataTable(data, ['factor', 'usage_count', 'avg_weight']);
+                
+                addOutput(`\nUse 'chart:bar' to visualize factor usage`, 'info');
+            } catch (error) {
+                addOutput('Failed to fetch factor data: ' + error.message, 'error');
+            }
+        }
+
+        async function executeCustomSQL(query) {
+            const sqlQuery = query || document.getElementById('custom-sql').value;
+            if (!sqlQuery.trim()) {
+                addOutput('Please enter a SQL query', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/analytics/custom-query', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ query: sqlQuery })
+                });
+                
+                const data = await response.json();
+                currentData = data;
+                
+                if (Array.isArray(data) && data.length > 0) {
+                    addOutput(`Query returned ${data.length} rows:`, 'info');
+                    createDataTable(data);
+                } else if (data.changes !== undefined) {
+                    addOutput(`Query executed. ${data.changes} rows affected.`, 'result');
+                } else {
+                    addOutput('Query executed successfully. No data returned.', 'result');
+                }
+            } catch (error) {
+                addOutput('SQL Error: ' + error.message, 'error');
+            }
+        }
+
+        async function executeQuickQuery(queryType) {
+            const queries = {
+                'equity-ranges': '/api/analytics/equity-ranges',
+                'founder-count': '/api/analytics/founder-patterns', 
+                'top-factors': '/api/analytics/factors-simple',
+                'investment-levels': '/api/analytics/company-size',
+                'recent-activity': '/api/analytics/activity-timeline'
+            };
+            
+            try {
+                const response = await fetch(queries[queryType]);
+                const data = await response.json();
+                currentData = data;
+                
+                addOutput(`📊 ${queryType.toUpperCase().replace('-', ' ')}`, 'info');
+                addOutput('═'.repeat(queryType.length + 4), 'info');
+                
+                createDataTable(data);
+            } catch (error) {
+                addOutput('Failed to execute query: ' + error.message, 'error');
+            }
+        }
+
+        async function generateInfographic(type) {
+            addOutput(`🎨 Generating ${type} infographic...`, 'info');
+            
+            const infographics = {
+                'equity-split': generateEquitySplitInfographic,
+                'factor-impact': generateFactorImpactInfographic,
+                'company-size': generateCompanySizeInfographic,
+                'founder-roles': generateFounderRolesInfographic
+            };
+            
+            if (infographics[type]) {
+                await infographics[type]();
+            } else {
+                addOutput('Unknown infographic type', 'error');
+            }
+        }
+
+        async function generateEquitySplitInfographic() {
+            try {
+                const response = await fetch('/api/analytics/equity-splits');
+                const data = await response.json();
+                
+                addOutput('💼 EQUITY SPLIT PATTERNS', 'info');
+                addOutput('═══════════════════════════', 'info');
+                
+                // Create visual representation
+                const container = document.createElement('div');
+                container.className = 'chart-container';
+                container.innerHTML = `
+                    <div class="chart-title">Recent Equity Distributions</div>
+                    <div class="bar-chart" id="equity-splits-chart"></div>
+                `;
+                
+                addOutputElement(container);
+                
+                // Populate chart
+                const chartContainer = container.querySelector('#equity-splits-chart');
+                const splitCounts = {};
+                
+                data.slice(0, 10).forEach(split => {
+                    const distribution = split.equity_splits;
+                    splitCounts[distribution] = (splitCounts[distribution] || 0) + 1;
+                });
+                
+                const maxCount = Math.max(...Object.values(splitCounts));
+                
+                Object.entries(splitCounts).forEach(([distribution, count]) => {
+                    const height = (count / maxCount) * 100;
+                    const bar = document.createElement('div');
+                    bar.className = 'chart-bar';
+                    bar.style.height = height + '%';
+                    bar.innerHTML = `${count}<div class="chart-label">${distribution.substring(0, 15)}</div>`;
+                    chartContainer.appendChild(bar);
+                });
+                
+                addOutput('Most common equity splits shown above. Equal splits are most frequent.', 'result');
+                
+            } catch (error) {
+                addOutput('Failed to generate equity split infographic: ' + error.message, 'error');
+            }
+        }
+
+        async function generateFactorImpactInfographic() {
+            try {
+                const response = await fetch('/api/analytics/factors-simple');
+                const data = await response.json();
+                
+                addOutput('🎯 FACTOR IMPACT ANALYSIS', 'info');
+                addOutput('═══════════════════════════', 'info');
+                
+                const container = document.createElement('div');
+                container.className = 'chart-container';
+                container.innerHTML = `
+                    <div class="chart-title">Contributing Factors by Usage & Weight</div>
+                    <div class="bar-chart" id="factor-impact-chart"></div>
+                `;
+                
+                addOutputElement(container);
+                
+                const chartContainer = container.querySelector('#factor-impact-chart');
+                const maxUsage = Math.max(...data.map(f => f.usage_count));
+                
+                data.slice(0, 8).forEach(factor => {
+                    const height = (factor.usage_count / maxUsage) * 100;
+                    const bar = document.createElement('div');
+                    bar.className = 'chart-bar';
+                    bar.style.height = height + '%';
+                    bar.style.background = `linear-gradient(180deg, hsl(${factor.avg_weight * 12}, 70%, 50%) 0%, hsl(${factor.avg_weight * 12}, 70%, 30%) 100%)`;
+                    bar.innerHTML = `${factor.usage_count}<div class="chart-label">${factor.factor.substring(0, 8)}</div>`;
+                    chartContainer.appendChild(bar);
+                });
+                
+                addOutput('Bar height = usage frequency, Color intensity = average weight (green = high impact)', 'result');
+                
+            } catch (error) {
+                addOutput('Failed to generate factor impact infographic: ' + error.message, 'error');
+            }
+        }
+
+        async function generateCompanySizeInfographic() {
+            try {
+                const response = await fetch('/api/analytics/company-size');
+                const data = await response.json();
+                
+                addOutput('🏢 COMPANY SIZE DISTRIBUTION', 'info');
+                addOutput('════════════════════════════', 'info');
+                
+                const container = document.createElement('div');
+                container.className = 'chart-container';
+                container.innerHTML = `
+                    <div class="chart-title">Companies by Team Size</div>
+                    <div style="display: flex; align-items: center; justify-content: space-around;">
+                        <div class="pie-chart" id="company-size-pie"></div>
+                        <div class="legend" id="company-size-legend"></div>
+                    </div>
+                `;
+                
+                addOutputElement(container);
+                
+                // Generate pie chart
+                const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57', '#ff9ff3'];
+                const total = data.reduce((sum, item) => sum + item.companies, 0);
+                
+                let currentAngle = 0;
+                const gradientStops = [];
+                
+                data.forEach((item, index) => {
+                    const angle = (item.companies / total) * 360;
+                    gradientStops.push(`${colors[index % colors.length]} ${currentAngle}deg ${currentAngle + angle}deg`);
+                    currentAngle += angle;
+                });
+                
+                const pieChart = container.querySelector('#company-size-pie');
+                pieChart.style.background = `conic-gradient(${gradientStops.join(', ')})`;
+                
+                const legend = container.querySelector('#company-size-legend');
+                legend.innerHTML = data.map((item, index) => `
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: ${colors[index % colors.length]}"></div>
+                        <span>${item.founding_team_size} founders: ${item.companies} (${((item.companies / total) * 100).toFixed(1)}%)</span>
+                    </div>
+                `).join('');
+                
+                addOutput('Most companies are small teams (2-3 founders). Single founder companies are rare.', 'result');
+                
+            } catch (error) {
+                addOutput('Failed to generate company size infographic: ' + error.message, 'error');
+            }
+        }
+
+        async function generateFounderRolesInfographic() {
+            try {
+                // This would need additional API endpoint for founder roles
+                addOutput('👔 FOUNDER ROLES ANALYSIS', 'info');
+                addOutput('═══════════════════════════', 'info');
+                addOutput('This infographic requires additional founder role data.', 'info');
+                addOutput('Consider adding role tracking to your questionnaire for richer insights.', 'result');
+                
+            } catch (error) {
+                addOutput('Failed to generate founder roles infographic: ' + error.message, 'error');
+            }
+        }
+
+        function createDataTable(data, columns = null) {
+            if (!data || !Array.isArray(data) || data.length === 0) {
+                addOutput('No data to display', 'result');
+                return;
+            }
+            
+            const table = document.createElement('table');
+            table.className = 'data-table';
+            
+            // Create header
+            const thead = document.createElement('thead');
+            const headerRow = document.createElement('tr');
+            
+            const cols = columns || Object.keys(data[0]);
+            cols.forEach(col => {
+                const th = document.createElement('th');
+                th.textContent = col.replace(/_/g, ' ').toUpperCase();
+                headerRow.appendChild(th);
+            });
+            thead.appendChild(headerRow);
+            table.appendChild(thead);
+            
+            // Create body
+            const tbody = document.createElement('tbody');
+            data.slice(0, 20).forEach(row => { // Limit to 20 rows for display
+                const tr = document.createElement('tr');
+                cols.forEach(col => {
+                    const td = document.createElement('td');
+                    const value = row[col];
+                    td.textContent = value !== null && value !== undefined ? value : 'NULL';
+                    tr.appendChild(td);
+                });
+                tbody.appendChild(tr);
+            });
+            table.appendChild(tbody);
+            
+            addOutputElement(table);
+            
+            if (data.length > 20) {
+                addOutput(`... showing first 20 of ${data.length} rows`, 'info');
+            }
+        }
+
+        function addOutput(text, type = 'result') {
+            const outputDiv = document.getElementById('console-output');
+            const line = document.createElement('div');
+            line.className = `output-line ${type}`;
+            line.textContent = text;
+            outputDiv.appendChild(line);
+            outputDiv.scrollTop = outputDiv.scrollHeight;
+        }
+
+        function addOutputElement(element) {
+            const outputDiv = document.getElementById('console-output');
+            outputDiv.appendChild(element);
+            outputDiv.scrollTop = outputDiv.scrollHeight;
+        }
+
+        async function exportData(format) {
+            if (!currentData || currentData.length === 0) {
+                addOutput('No data to export. Run a query first.', 'error');
+                return;
+            }
+            
+            try {
+                let content, filename, mimeType;
+                
+                if (format === 'csv') {
+                    content = convertToCSV(currentData);
+                    filename = 'equity_data.csv';
+                    mimeType = 'text/csv';
+                } else if (format === 'json') {
+                    content = JSON.stringify(currentData, null, 2);
+                    filename = 'equity_data.json';
+                    mimeType = 'application/json';
+                } else if (format === 'png') {
+                    addOutput('Chart export functionality would be implemented here', 'info');
+                    addOutput('Consider using html2canvas or similar library for chart export', 'info');
+                    return;
+                }
+                
+                const blob = new Blob([content], { type: mimeType });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                a.click();
+                URL.revokeObjectURL(url);
+                
+                addOutput(`Data exported as ${filename}`, 'result');
+            } catch (error) {
+                addOutput('Export failed: ' + error.message, 'error');
+            }
+        }
+
+        function convertToCSV(data) {
+            if (data.length === 0) return '';
+            
+            const headers = Object.keys(data[0]);
+            const csvRows = [headers.join(',')];
+            
+            data.forEach(row => {
+                const values = headers.map(header => {
+                    const value = row[header];
+                    return typeof value === 'string' ? `"${value.replace(/"/g, '""')}"` : value;
+                });
+                csvRows.push(values.join(','));
+            });
+            
+            return csvRows.join('\n');
+        }
+
+        async function interpretQuery(query) {
+            // Simple natural language interpretation
+            const q = query.toLowerCase();
+            
+            if (q.includes('equity') && q.includes('split')) {
+                await showEquityData();
+            } else if (q.includes('founder') && q.includes('count')) {
+                await showFounderData();
+            } else if (q.includes('factor') || q.includes('contribution')) {
+                await showFactorData();
+            } else if (q.includes('stat') || q.includes('overview')) {
+                await showStats();
+            } else {
+                addOutput('Unknown command. Type "help" for available commands.', 'error');
+                addOutput('Try: stats, equity, founders, factors, or sql: SELECT ...', 'info');
+            }
+        }
+    </script>
+</body>
+</html>

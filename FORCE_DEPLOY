@@ -1,0 +1,3 @@
+Force deployment - 2025-05-26 03:20 UTC
+CORS fix needed for equity-calculator.com
+Railway must deploy the updated server.js with manual CORS headers

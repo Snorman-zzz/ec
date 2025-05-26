@@ -1,0 +1,54 @@
+# Multi-Cloud Deployment Configuration
+
+# Google Cloud Run
+gcp:
+  service_name: equity-calculator-backend
+  region: us-central1
+  memory: 2Gi
+  cpu: 1000m
+  max_instances: 100
+  min_instances: 0
+  port: 5001
+  env_vars:
+    NODE_ENV: production
+    PORT: 5001
+
+# Azure Container Instances
+azure:
+  resource_group: equity-calculator-rg
+  container_name: equity-calculator-backend
+  location: eastus
+  memory: 2
+  cpu: 1
+  port: 5001
+  env_vars:
+    NODE_ENV: production
+    PORT: 5001
+
+# AWS ECS Fargate
+aws:
+  cluster_name: equity-calculator-cluster
+  service_name: equity-calculator-backend
+  task_family: equity-calculator-task
+  memory: 2048
+  cpu: 1024
+  port: 5001
+  env_vars:
+    NODE_ENV: production
+    PORT: 5001
+
+# Railway
+railway:
+  service_name: equity-calculator-backend
+  env_vars:
+    NODE_ENV: production
+
+# Environment Variables (Set these in your cloud platform)
+environment:
+  required:
+    - NODE_ENV
+    - PORT
+  optional:
+    - DATABASE_URL
+    - CORS_ORIGIN
+    - ANALYTICS_ENABLED
